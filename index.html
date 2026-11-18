@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniGoogle 1998 - PageRank Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background: #f8f9fa;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 72px;
+            font-weight: bold;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .logo span:nth-child(1) { color: #4285f4; } /* M - blue */
+        .logo span:nth-child(2) { color: #ea4335; } /* i - red */
+        .logo span:nth-child(3) { color: #fbbc04; } /* n - yellow */
+        .logo span:nth-child(4) { color: #4285f4; } /* i - blue */
+        .logo span:nth-child(5) { color: #34a853; } /* G - green */
+        .logo span:nth-child(6) { color: #ea4335; } /* o - red */
+        .logo span:nth-child(7) { color: #4285f4; } /* o - blue */
+        .logo span:nth-child(8) { color: #34a853; } /* g - green */
+        .logo span:nth-child(9) { color: #fbbc04; } /* l - yellow */
+        .logo span:nth-child(10) { color: #ea4335; } /* e - red */
+
+        .year {
+            display: inline-block;
+            color: #999;
+            font-size: 24px;
+            margin-left: 10px;
+            vertical-align: super;
+        }
+
+        .search-box {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 600px;
+            padding: 16px 24px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 30px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: #4285f4;
+        }
+
+        .button-group {
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 28px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 0 8px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .search-btn {
+            background: #4285f4;
+            color: white;
+        }
+
+        .search-btn:hover {
+            background: #357ae8;
+            box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
+        }
+
+        .fake-btn {
+            background: #fff0f0;
+            color: #d93025;
+            border: 1px solid #f8d7da;
+        }
+
+        .fake-btn:hover {
+            background: #ffe6e6;
+        }
+
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 15px;
+            color: #666;
+            min-height: 24px;
+        }
+
+        .results-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 900px) {
+            .results-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .column {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .column-header {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .column-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .column-subtitle {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .old-way .column-title {
+            color: #d93025;
+        }
+
+        .pagerank-way .column-title {
+            color: #34a853;
+        }
+
+        .result-card {
+            background: #fafafa;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #e8e8e8;
+            animation: fadeSlideIn 0.3s ease-out;
+            position: relative;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .rank-number {
+            display: inline-block;
+            background: #666;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+
+        .domain {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a0dab;
+            margin-bottom: 8px;
+        }
+
+        .snippet {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .highlight {
+            background: #ffeb3b;
+            padding: 2px 0;
+        }
+
+        .stat-line {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e8e8e8;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 0.5s ease-out;
+        }
+
+        .old-way .progress-fill {
+            background: linear-gradient(to right, #d93025, #f57c00);
+        }
+
+        .pagerank-way .progress-fill {
+            background: linear-gradient(to right, #34a853, #7cb342);
+        }
+
+        .fake-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #d93025;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .spam-note {
+            text-align: center;
+            margin-top: 20px;
+            padding: 16px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            color: #856404;
+            font-size: 14px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 15px;
+        }
+
+        @media (min-width: 1200px) {
+            .logo {
+                font-size: 96px;
+            }
+            .column-title {
+                font-size: 32px;
+            }
+            .search-input {
+                font-size: 20px;
+                padding: 18px 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <span>M</span><span>i</span><span>n</span><span>i</span><span>G</span><span>o</span><span>o</span><span>g</span><span>l</span><span>e</span>
+                <span class="year">1998</span>
+            </div>
+        </header>
+
+        <div class="search-box">
+            <input 
+                type="text" 
+                class="search-input" 
+                id="searchInput" 
+                placeholder="Search the mini web..."
+                autofocus
+            >
+            <div class="button-group">
+                <button class="search-btn" onclick="search()">Search</button>
+                <button class="fake-btn" id="fakeBtn" onclick="toggleFakePages()">😈 Add 3 fake pages</button>
+            </div>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <div class="results-container">
+            <div class="column old-way">
+                <div class="column-header">
+                    <div class="column-title">Old way</div>
+                    <div class="column-subtitle">How many times the word appears</div>
+                </div>
+                <div id="oldResults"></div>
+            </div>
+
+            <div class="column pagerank-way">
+                <div class="column-header">
+                    <div class="column-title">PageRank way</div>
+                    <div class="column-subtitle">How often a random surfer visits</div>
+                </div>
+                <div id="pagerankResults"></div>
+            </div>
+        </div>
+
+        <div id="spamNote"></div>
+    </div>
+
+    <script>
+        // Original pages in our mini web
+        const originalPages = [
+            { id: 1, url: "pune-food-guide.com", text: "Where to eat in Pune - vada pav and biryani and pizza", links_to: [2] },
+            { id: 2, url: "best-pizza-pune.com", text: "Fresh wood-fired pizza made daily - try our cheese pizza", links_to: [1, 3] },
+            { id: 3, url: "college-canteen-blog.com", text: "Student reviews of canteen food and chai and Friday pizza", links_to: [2, 4] },
+            { id: 4, url: "pizza-recipes-home.com", text: "Make pizza at home - pizza dough and pizza sauce", links_to: [2, 5] },
+            { id: 5, url: "cheap-eats-pune.com", text: "Good food under 100 rupees - misal and dosa and pizza slices", links_to: [2] },
+            { id: 6, url: "pizza-pizza-pizza.com", text: "pizza pizza pizza pizza pizza pizza pizza pizza pizza pizza", links_to: [1], isFake: false }
+        ];
+
+        // Fake spam pages (link farm)
+        const fakePages = [
+            { id: 7, url: "free-pizza-pizza-deals.com", text: "pizza pizza pizza pizza pizza pizza pizza pizza pizza pizza pizza pizza", links_to: [6, 8, 9], isFake: true },
+            { id: 8, url: "best-pizza-pizza-offer.com", text: "pizza pizza pizza pizza pizza pizza pizza pizza pizza pizza pizza pizza", links_to: [6, 7, 9], isFake: true },
+            { id: 9, url: "win-pizza-pizza-now.com", text: "pizza pizza pizza pizza pizza pizza pizza pizza pizza pizza pizza pizza", links_to: [6, 7, 8], isFake: true }
+        ];
+
+        let pages = [...originalPages];
+        let pageRankScores = {};
+        let fakeActive = false;
+        let searchDebounce = null;
+
+        // Compute PageRank using random surfer simulation
+        function computePageRank() {
+            const ITERATIONS = 100000;
+            const DAMPING = 0.85;
+            
+            // Build adjacency list
+            const graph = {};
+            pages.forEach(page => {
+                graph[page.id] = page.links_to || [];
+            });
+
+            // Count visits to each page
+            const visits = {};
+            pages.forEach(page => visits[page.id] = 0);
+
+            // Start at a random page
+            let currentPageId = pages[Math.floor(Math.random() * pages.length)].id;
+
+            // Random surfer simulation: 100,000 moves
+            for (let i = 0; i < ITERATIONS; i++) {
+                visits[currentPageId]++;
+
+                const outgoingLinks = graph[currentPageId] || [];
+                
+                // With probability 0.85, follow a random link (if any exist)
+                // With probability 0.15 (or if no links), jump to random page
+                if (outgoingLinks.length > 0 && Math.random() < DAMPING) {
+                    // Follow a random outgoing link
+                    const randomLink = outgoingLinks[Math.floor(Math.random() * outgoingLinks.length)];
+                    currentPageId = randomLink;
+                } else {
+                    // Jump to a random page (teleport)
+                    currentPageId = pages[Math.floor(Math.random() * pages.length)].id;
+                }
+            }
+
+            // Convert visits to percentages
+            pageRankScores = {};
+            pages.forEach(page => {
+                pageRankScores[page.id] = (visits[page.id] / ITERATIONS) * 100;
+            });
+        }
+
+        // Count occurrences of query word in text (case-insensitive)
+        function countOccurrences(text, query) {
+            const lowerText = text.toLowerCase();
+            const lowerQuery = query.toLowerCase();
+            let count = 0;
+            let pos = 0;
+            
+            while ((pos = lowerText.indexOf(lowerQuery, pos)) !== -1) {
+                count++;
+                pos += lowerQuery.length;
+            }
+            
+            return count;
+        }
+
+        // Check if page matches query
+        function matchesQuery(page, query) {
+            const lowerQuery = query.toLowerCase();
+            return page.text.toLowerCase().includes(lowerQuery) || 
+                   page.url.toLowerCase().includes(lowerQuery);
+        }
+
+        // Highlight query in snippet
+        function highlightSnippet(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        // Render results for old way (keyword counting)
+        function renderOldWay(matchingPages, query) {
+            const container = document.getElementById('oldResults');
+            
+            if (matchingPages.length === 0) {
+                container.innerHTML = '<div class="empty-state">No matching pages</div>';
+                return;
+            }
+
+            // Count occurrences for each page
+            const scored = matchingPages.map(page => ({
+                page,
+                count: countOccurrences(page.text + ' ' + page.url, query)
+            }));
+
+            // Sort by count (descending), keep original order for ties
+            scored.sort((a, b) => b.count - a.count);
+
+            // Find max count for progress bar scaling
+            const maxCount = Math.max(...scored.map(s => s.count));
+
+            // Render cards
+            container.innerHTML = scored.map((item, index) => {
+                const { page, count } = item;
+                const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                
+                return `
+                    <div class="result-card">
+                        ${page.isFake ? '<div class="fake-badge">FAKE</div>' : ''}
+                        <div>
+                            <span class="rank-number">#${index + 1}</span>
+                            <span class="domain">${page.url}</span>
+                        </div>
+                        <div class="snippet">${highlightSnippet(page.text, query)}</div>
+                        <div class="stat-line">"${query}" appears ${count} time${count !== 1 ? 's' : ''}</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render results for PageRank way
+        function renderPageRank(matchingPages, query) {
+            const container = document.getElementById('pagerankResults');
+            
+            if (matchingPages.length === 0) {
+                container.innerHTML = '<div class="empty-state">No matching pages</div>';
+                return;
+            }
+
+            // Sort by PageRank (descending)
+            const sorted = [...matchingPages].sort((a, b) => 
+                pageRankScores[b.id] - pageRankScores[a.id]
+            );
+
+            // Find max PageRank for progress bar scaling
+            const maxRank = Math.max(...sorted.map(p => pageRankScores[p.id]));
+
+            // Render cards
+            container.innerHTML = sorted.map((page, index) => {
+                const rank = pageRankScores[page.id];
+                const percentage = maxRank > 0 ? (rank / maxRank) * 100 : 0;
+                
+                return `
+                    <div class="result-card">
+                        ${page.isFake ? '<div class="fake-badge">FAKE</div>' : ''}
+                        <div>
+                            <span class="rank-number">#${index + 1}</span>
+                            <span class="domain">${page.url}</span>
+                        </div>
+                        <div class="snippet">${highlightSnippet(page.text, query)}</div>
+                        <div class="stat-line">PageRank: ${rank.toFixed(1)}%</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Main search function
+        function search() {
+            const query = document.getElementById('searchInput').value.trim();
+            
+            if (!query) {
+                document.getElementById('status').textContent = '';
+                document.getElementById('oldResults').innerHTML = '';
+                document.getElementById('pagerankResults').innerHTML = '';
+                return;
+            }
+
+            // Find matching pages
+            const matching = pages.filter(page => matchesQuery(page, query));
+
+            // Update status
+            const statusEl = document.getElementById('status');
+            if (matching.length > 0) {
+                statusEl.textContent = `${matching.length} page${matching.length !== 1 ? 's' : ''} found for "${query}" · PageRank from 100,000 random-surfer moves`;
+            } else {
+                statusEl.textContent = 'No pages found. Try: pizza, food, pune';
+            }
+
+            // Render both columns
+            renderOldWay(matching, query);
+            renderPageRank(matching, query);
+        }
+
+        // Toggle fake pages
+        function toggleFakePages() {
+            const btn = document.getElementById('fakeBtn');
+            const noteEl = document.getElementById('spamNote');
+
+            if (!fakeActive) {
+                // Add fake pages
+                pages = [...originalPages, ...fakePages];
+                computePageRank();
+                btn.textContent = '↩ Remove fake pages';
+                noteEl.innerHTML = '<div class="spam-note">💡 Spammers can stuff keywords, but they can\'t force real sites to link to them.</div>';
+                fakeActive = true;
+            } else {
+                // Remove fake pages
+                pages = [...originalPages];
+                computePageRank();
+                btn.textContent = '😈 Add 3 fake pages';
+                noteEl.innerHTML = '';
+                fakeActive = false;
+            }
+
+            // Re-run current search
+            search();
+        }
+
+        // Search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                search();
+            }
+        });
+
+        // Debounced search on typing
+        document.getElementById('searchInput').addEventListener('input', () => {
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(search, 200);
+        });
+
+        // Initialize PageRank on load
+        computePageRank();
+    </script>
+</body>
+</html>
